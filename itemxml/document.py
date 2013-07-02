@@ -7,16 +7,7 @@ class Factory:
         self.id_counter = 0
         self.model = model
 
-    def get_next_id(self):
-        obj_id = self.id_counter
-        self.id_counter = self.id_counter + 1
-        return obj_id
-
-    def create_item(self, classnames, properties = None):
-        i = self.get_next_id()
-        item = Item(self.model, i, classnames, properties)
-        item.validate()
-        return item
+    # The public API:
 
     def add(self, classnames, properties = None):
         item = self.create_item(classnames, properties)
@@ -30,13 +21,26 @@ class Factory:
         for item in filter(lambda i: self.wanted(classname, properties, i), self.items.values()):
             yield item
 
+    def __iter__(self):
+        for idx in xrange(self.id_counter):
+            yield self.items[idx]
+
+    # Private API
+
+    def get_next_id(self):
+        obj_id = self.id_counter
+        self.id_counter = self.id_counter + 1
+        return obj_id
+
+    def create_item(self, classnames, properties = None):
+        i = self.get_next_id()
+        item = Item(self.model, i, classnames, properties)
+        item.validate()
+        return item
+
     def wanted(self, classname, properties, item):
         class_ok = classname in item.classnames or any(cd.isa(classname) for cd in item.classes)
 
         item_props = item.properties.items()
         return class_ok and all(pair in item_props for pair in properties.iteritems())
-
-    def __iter__(self):
-        for idx in range(self.id_counter):
-            yield self.items[idx]
 
