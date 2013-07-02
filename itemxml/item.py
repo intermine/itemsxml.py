@@ -16,7 +16,7 @@ class ItemPropertyError(Exception):
     MSG = "This value (%s) is not suitable for this field (%s)"
 
     def __init__(self, value, field):
-        Exception.__init__(self, MSG % (value, field))
+        Exception.__init__(self, ItemPropertyError.MSG % (value, field))
 
 class Item:
 
@@ -35,6 +35,12 @@ class Item:
         self.properties['id'] = item_id
         self.classes = set()
         self.fields = {}
+
+    def __str__(self):
+        return "<Item classes=%s, properties=%s>" % (self.classnames, self.properties)
+
+    def __repr__(self):
+        return "Item(%s, %s, %s)" % (self.get('id'), self.classnames, self.properties)
 
     @property
     def classname(self):

@@ -6,7 +6,7 @@ class EmptyValueError(Exception):
     def __init__(self, name):
         Exception.__init__(self, "no value supplied for " + name)
 
-class XMLWriter:
+class XMLWriter(object):
 
     DEFAULT_PREFIX = "0_"
 
@@ -19,6 +19,7 @@ class XMLWriter:
         self.raise_error_on_empty_value = not allow_none
 
         self.writer = loxun.XmlWriter(f)
+        self.written = set()
 
     def begin(self):
         self.writer.startTag("items")
@@ -44,13 +45,16 @@ class XMLWriter:
         else:
             fd = item.get_field_descriptor(name)
             if fd.fieldtype == "collection":
-                self.writer.startTag("collection", {"name": name})
-                for ref in value:
-                    self.write_reference(ref)
+                self.write_collection(value, name)
             elif fd.fieldtype == "reference":
                 self.write_reference(value, name)
             else:
                 self.writer.tag("attribute", {"name": name, "value": value})
+
+    def write_collection(self, coll, name):
+        self.writer.startTag("collection", {"name": name})
+        map(self.write_reference, coll)
+        self.writer.endTag()
 
     def write_reference(self, ref, name = None):
         attrs = {"ref_id": self.prefix + str(ref.get("id"))}
@@ -60,22 +64,27 @@ class XMLWriter:
 
     def end(self):
         self.writer.endTag()
+        self.writer.close()
 
-def write_itemsxml(items, filename = None):
-    written = set()
+    def __enter__(self):
+        self.begin()
+        return self
 
-    def writeitems(out):
-        xml_writer = XMLWriter(out)
+    def __exit__(self, exc_type, exc_val, traceback):
+        self.end()
 
-        xml_writer.begin()
-
+    def write_items(self, items):
         for item in items:
             item_id = item.get('id')
-            if item_id not in written:
-                xml_writer.write_item(item)
-                written.add(item_id)
+            if item_id not in self.written:
+                self.write_item(item)
+                self.written.add(item_id)
 
-        xml_writer.end()
+def write_itemsxml(items, filename = None):
+
+    def writeitems(out):
+        with XMLWriter(out) as writer:
+            writer.write_items(items)
 
     if filename is None:
         writeitems(sys.stdout)
