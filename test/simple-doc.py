@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, random
 
 sys.path.append(os.path.dirname(__file__) + "/..")
 
@@ -15,7 +15,14 @@ deps = map(lambda c: items.add(["Department"], {"name": c}), ["Big", "Small"])
 
 for name in ["Tom", "Dick", "Harry"]:
     e = items.add(["Employee"], {"name": name})
-    e.set('department', deps[0])
+    e.set('department', random.choice(deps))
+    e.set('age', random.randint(25, 65))
+
+c = items.add(["Company"], {"name": "UberCorp", "departments": deps})
+
+print(items.get(0))
+
+print(list(items.search("Employee", {"name": "Tom"})))
 
 io.write_itemsxml(items)
 
