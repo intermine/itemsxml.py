@@ -1,4 +1,4 @@
-import itemxml.item.Item
+from itemxml.item import Item
 
 class Factory:
 
@@ -7,16 +7,21 @@ class Factory:
         self.id_counter = 0
         self.model = model
 
-    def get_next_id():
+    def get_next_id(self):
         obj_id = self.id_counter
         self.id_counter = self.id_counter + 1
         return obj_id
 
-    def create_item(classnames, properties = None):
+    def create_item(self, classnames, properties = None):
         i = self.get_next_id()
         item = Item(self.model, i, classnames, properties)
         item.validate()
-        self.items[i] = item
+        return item
+
+    def add(self, classnames, properties = None):
+        item = self.create_item(classnames, properties)
+        self.items[item.get('id')] = item
+        return item
 
     def __iter__(self):
         for idx in range(self.id_counter):

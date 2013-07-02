@@ -34,6 +34,23 @@ class Item:
         self.properties = properties
         self.properties['id'] = item_id
         self.classes = set()
+        self.fields = {}
+
+    @property
+    def classname(self):
+        if len(self.classes) == 1:
+            c = next(iter(self.classes))
+            if not c.is_interface:
+                return c.name
+        return None
+
+    @property
+    def implements(self):
+        if len(self.classes) == 1:
+            c = next(iter(self.classes))
+            if not c.is_interface:
+                return set()
+        return self.classnames
 
     def validate(self):
         self.validate_type()
@@ -43,30 +60,29 @@ class Item:
         """ Make sure this item is typed properly, and resolve the set of
             class-descriptors it refers to """
         if len(self.classnames):
-            for interface in self.impls:
-                self.classes.add(self.model.get_class(interface))
+            for name in self.classnames:
+                self.classes.add(self.model.get_class(name))
         else:
             raise NoTypeError()
 
+        self.fields = dict(reduce(lambda x, y: y.field_dict.items() + x, self.classes, []))
+
     def get_field_descriptor(self, name):
-        for cd in self.classes:
-            try:
-                return cd.get_field(name)
-            except:
-                pass
-        raise ItemTypeError("Could not find %s in %s" % (name, self.classes))
+        if name in self.fields:
+            return self.fields[name]
+        raise ItemTypeError("Could not find field %s in %s with fields: %s" % (name, self.classes, self.fields.keys()))
 
     def validate_properties(self):
         for name, value in self.properties.items():
             self.validate_property(name, value)
 
-    def validate_property(name, value):
+    def validate_property(self, name, value):
         fd = self.get_field_descriptor(name)
         if fd.type_class is not None:
-            if isinstance(fd, intermine.model.Collection):
+            if fd.fieldtype == "collection":
                 try:
                     for item in value:
-                        if not item.is_assignable_to(fd)
+                        if not item.is_assignable_to(fd):
                             raise ItemPropertyError(item, fd)
                 except TypeError:
                     raise ItemPropertyError(value, fd)
@@ -79,18 +95,18 @@ class Item:
 
     def is_assignable_to(self, field):
         if field.type_class is None:
-            return false
+            return False
         else:
             for cd in self.classes:
                 if cd.isa(field.type_class):
-                    return true
-        return false
+                    return True
+        return False
 
-    def set(name, value):
+    def set(self, name, value):
         self.validate_property(name, value)
         self.properties[name] = value
 
-    def get(name):
+    def get(self, name):
         self.get_field_descriptor(name) # Check it can exist.
-        return self.properties[:value]
+        return self.properties[name]
 
