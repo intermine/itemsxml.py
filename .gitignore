@@ -1,2 +1,8 @@
-itemxml/*.pyc
-test/*.pyc
+*.pyc
+lib
+bin
+*.egg
+*.egg-info
+local
+include
+
