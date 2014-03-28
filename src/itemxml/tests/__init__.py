@@ -6,6 +6,7 @@ def suite():
     import doctest
     suite = unittest.TestSuite()
     suite.addTests(doctest.DocTestSuite(itemxml.document))
+    suite.addTests(doctest.DocTestSuite(itemxml.item, optionflags = doctest.IGNORE_EXCEPTION_DETAIL))
     suite.addTests(test_simple_doc.suite())
     return suite
 

@@ -1,6 +1,9 @@
 ID_PREFIX = '0_'
 
-import intermine
+def get_model():
+    from os.path import join, dirname
+    import intermine.model
+    return intermine.model.Model(join(dirname(__file__), '..', '..', 'resources', 'testmodel_model.xml'))
 
 class ItemTypeError(Exception):
     pass
@@ -19,6 +22,12 @@ class ItemPropertyError(Exception):
         Exception.__init__(self, ItemPropertyError.MSG % (value, field))
 
 class Item:
+    """A record to be written into an InterMine DB, and merged with others.
+
+    >>> item = Item(get_model(), 1, ['Employee', 'Broke'], {'name': 'John', 'debt': 100})
+    >>> print item
+    <Item classes=set(['Employee', 'Broke']), properties={'debt': 100, 'name': 'John', 'id': 1}>
+    """
 
     def __init__(self, model, item_id, classnames = None, properties = None):
         if properties is None:
@@ -33,14 +42,74 @@ class Item:
         self.classnames = classnames
         self.properties = properties
         self.properties['id'] = item_id
-        self.classes = set()
-        self.fields = {}
+        self._classes = None
+        self._fields = None
+
+    def set(self, name, value):
+        """Add a datum to this item.
+
+        >>> schema = get_model()
+        >>> item = Item(schema, 1, ['Employee', 'Broke'], {'name': 'Brian'})
+        >>> item.set('debt', 200)
+        >>> print item
+        <Item classes=set(['Employee', 'Broke']), properties={'debt': 200, 'name': 'Brian', 'id': 1}>
+
+        Only valid data is allowed. Invalid property assignment will
+        raise errors.
+
+        >>> item.set('perversity', float('inf'))
+        Traceback (most recent call last):
+        ...
+        ItemTypeError: Could not find field perversity...
+
+        Illegal access will not change the item:
+        >>> print item
+        <Item classes=set(['Employee', 'Broke']), properties={'debt': 200, 'name': 'Brian', 'id': 1}>
+        """
+        self.validate_property(name, value)
+        self.properties[name] = value
+
+    def get(self, name):
+        """Get a datum from this item.
+
+        >>> item = Item(get_model(), 1, ['Employee', 'Broke'], {'name': 'Susan'})
+        >>> print item.get('name')
+        Susan
+
+        Accessing unset properties is valid, but they must conform to
+        the data model
+        >>> print item.get('debt')
+        None
+
+        Accessing properties that don't conform with the data model
+        will cause an error to be raised
+        >>> print item.get('perversity')
+        Traceback (most recent call last):
+        ...
+        ItemTypeError: Could not find field perversity...
+        """
+        self.get_field_descriptor(name) # Check it can exist.
+        return self.properties.get(name)
 
     def __str__(self):
-        return "<Item classes=%s, properties=%s>" % (self.classnames, self.properties)
+        return "<Item classes=%r, properties=%r>" % (self.classnames, self.properties)
 
     def __repr__(self):
         return "Item(%s, %s, %s)" % (self.get('id'), self.classnames, self.properties)
+
+    @property
+    def classes(self):
+        if self._classes is None:
+            self._classes = set()
+            for name in self.classnames:
+                self.classes.add(self.model.get_class(name))
+        return self._classes
+
+    @property
+    def fields(self):
+        if self._fields is None:
+            self._fields = dict(reduce(lambda x, y: y.field_dict.items() + x, self.classes, []))
+        return self._fields
 
     @property
     def classname(self):
@@ -59,19 +128,43 @@ class Item:
         return self.classnames
 
     def validate(self):
+        """Check that this item is valid, throwing an error if not.
+
+        >>> schema = get_model()
+        >>> good = Item(schema, 1, ['Employee', 'Broke'], {'name': 'John', 'debt': 100})
+        >>> good.validate()
+        >>> bad = Item(schema, 1, ['Employee'], {'name': 'John', 'debt': 100})
+        >>> bad.validate()
+        Traceback (most recent call last):
+        ...
+        ItemTypeError: Could not find field debt...
+        >>> terrible = Item(schema, 1, ['Foo'], {'name': 'John', 'debt': 100})
+        >>> terrible.validate()
+        Traceback (most recent call last):
+        ...
+        ModelError: "'Foo' is not a class in this model"
+        """
         self.validate_type()
         self.validate_properties()
 
     def validate_type(self):
         """ Make sure this item is typed properly, and resolve the set of
-            class-descriptors it refers to """
-        if len(self.classnames):
-            for name in self.classnames:
-                self.classes.add(self.model.get_class(name))
-        else:
-            raise NoTypeError()
+            class-descriptors it refers to
 
-        self.fields = dict(reduce(lambda x, y: y.field_dict.items() + x, self.classes, []))
+        >>> schema = get_model()
+        >>> terrible = Item(schema, 1, ['Foo'], {'name': 'John', 'debt': 100})
+        >>> terrible.validate_type()
+        Traceback (most recent call last):
+        ...
+        ModelError: "'Foo' is not a class in this model"
+        >>> woeful = Item(schema, 1, [], {'name': 'John', 'debt': 100})
+        >>> woeful.validate_type()
+        Traceback (most recent call last):
+        ...
+        NoTypeError: "Item declared with neither class-name nor set of interfaces"
+        """
+        if not len(self.classes):
+            raise NoTypeError()
 
     def get_field_descriptor(self, name):
         if name in self.fields:
@@ -107,12 +200,3 @@ class Item:
                 if cd.isa(field.type_class):
                     return True
         return False
-
-    def set(self, name, value):
-        self.validate_property(name, value)
-        self.properties[name] = value
-
-    def get(self, name):
-        self.get_field_descriptor(name) # Check it can exist.
-        return self.properties[name]
-
