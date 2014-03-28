@@ -1,5 +1,10 @@
 from itemxml.item import Item
 
+def get_model():
+    from os.path import join, dirname
+    import intermine.model
+    return intermine.model.Model(join(dirname(__file__), '..', '..', 'resources', 'testmodel_model.xml'))
+
 class Factory:
 
     def __init__(self, model):
@@ -10,9 +15,21 @@ class Factory:
     # The public API:
 
     def add(self, classnames, properties = None):
+        """Add an Item to this Document
+
+        >>> document = Factory(get_model())
+        >>> emp = document.add(['Employee'], {'name': 'Anne'})
+        >>> print len(document)
+        1
+        >>> print emp.get('name')
+        Anne
+        """
         item = self._create_item(classnames, properties)
         self.items[item.get('id')] = item
         return item
+
+    def __len__(self):
+        return len(self.items)
 
     def get(self, itemid):
         return self.items[itemid]
