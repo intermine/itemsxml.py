@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items>
+  <item class="Department" id="0_0" implements="">
+    <attribute name="name" value="Big" />
+  </item>
+  <item class="Department" id="0_1" implements="">
+    <attribute name="name" value="Small" />
+  </item>
+  <item class="Employee" id="0_2" implements="">
+    <reference name="department" ref_id="0_0" />
+    <attribute name="age" value="25" />
+    <attribute name="name" value="Tom" />
+  </item>
+  <item class="Employee" id="0_3" implements="">
+    <reference name="department" ref_id="0_1" />
+    <attribute name="age" value="26" />
+    <attribute name="name" value="Dick" />
+  </item>
+  <item class="Employee" id="0_4" implements="">
+    <reference name="department" ref_id="0_0" />
+    <attribute name="age" value="27" />
+    <attribute name="name" value="Harry" />
+  </item>
+  <item class="" id="0_5" implements="Company">
+    <attribute name="name" value="UberCorp" />
+    <collection name="departments">
+      <reference ref_id="0_0" />
+      <reference ref_id="0_1" />
+    </collection>
+  </item>
