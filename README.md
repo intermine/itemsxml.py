@@ -8,6 +8,7 @@ Usage
 -------
 
 ```: python
+
 from contextlib import closing
 from intermine.model import Model
 from itemxml import document, io
@@ -25,6 +26,7 @@ with closing(open(gene_file)) as genes, io.XMLWriter() as w:
             gene = document.add(['Gene'], symbol = line)
             gene.set('organism', organism)
             w.write_item(gene)
+
 ```
 
 This library is designed to support writing items incrementally
