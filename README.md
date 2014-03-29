@@ -7,7 +7,7 @@ code.
 Usage
 -------
 
-```: python
+``` py
 
 from contextlib import closing
 from intermine.model import Model
@@ -17,13 +17,13 @@ gene_file = 'path/to/gene_list.txt'
 model = Model("path/to/model.xml")
 document = document.Factory(model)
 
-organism = document.add(['Organism'], taxonId = 7227)
+organism = document.add('Organism', taxonId = 7227)
 
 with closing(open(gene_file)) as genes, io.XMLWriter() as w:
     w.write_item(organism)
     for line in genes:
-        if not line.startswith("#"):
-            gene = document.add(['Gene'], symbol = line)
+        if not line.startswith("#":)
+            gene = document.add('Gene', symbol = line.strip())
             gene.set('organism', organism)
             w.write_item(gene)
 
