@@ -20,12 +20,12 @@ class SimpleDocumentTestCase(unittest.TestCase):
 
     def test_document(self):
 
-        deps = map(lambda c: self.items.add(["Department"], {"name": c}), ["Big", "Small"])
+        deps = map(lambda c: self.items.add('Department', name = c), ["Big", "Small"])
         for idx, name in enumerate(["Tom", "Dick", "Harry"]):
-            e = self.items.add(["Employee"], {"name": name})
+            e = self.items.add('Employee', name = name)
             e.set('department', deps[idx % 2])
             e.set('age', idx + 25)
-        c = self.items.add(["Company"], {"name": "UberCorp", "departments": deps})
+        c = self.items.add('Company', name = "UberCorp", departments = deps)
 
         with closing(open(expected_result)) as f:
             expected = f.read()
