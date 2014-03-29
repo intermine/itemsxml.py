@@ -14,11 +14,11 @@ class Factory:
 
     # The public API:
 
-    def add(self, classnames, properties = None):
+    def add(self, *classnames, **properties):
         """Add an Item to this Document
 
         >>> document = Factory(get_model())
-        >>> emp = document.add(['Employee'], {'name': 'Anne'})
+        >>> emp = document.add('Employee', name = 'Anne')
         >>> print len(document)
         1
         >>> print emp.get('name')

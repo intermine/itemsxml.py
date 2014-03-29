@@ -25,6 +25,12 @@ class XMLWriter(object):
         self.writer.startTag("items")
 
     def write_item(self, item):
+        item_id = item.get('id')
+        if item_id not in self.written:
+            self._write_item(item)
+            self.written.add(item_id)
+
+    def _write_item(self, item):
         cname = item.classname
         impls = item.implements
         item_attr = {
@@ -75,10 +81,7 @@ class XMLWriter(object):
 
     def write_items(self, items):
         for item in items:
-            item_id = item.get('id')
-            if item_id not in self.written:
-                self.write_item(item)
-                self.written.add(item_id)
+            self.write_item(item)
 
 def write_itemsxml(items, filename = None):
 
