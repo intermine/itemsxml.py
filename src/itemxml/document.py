@@ -24,8 +24,23 @@ class Factory:
         >>> print emp.get('name')
         Anne
         """
-        item = self._create_item(classnames, properties)
+        item = self.create(*classnames, **properties)
         self.items[item.get('id')] = item
+        return item
+
+    def create(self, *classnames, **properties):
+        """Create an Item, but remember nothing about it.
+
+        >>> document = Factory(get_model())
+        >>> emp = document.create('Employee', name = 'Anne')
+        >>> print len(document)
+        0
+        >>> print emp.get('name')
+        Anne
+        """
+        i = self._get_next_id()
+        item = Item(self.model, i, classnames, properties)
+        item.validate()
         return item
 
     def __len__(self):
@@ -48,12 +63,6 @@ class Factory:
         obj_id = self.id_counter
         self.id_counter = self.id_counter + 1
         return obj_id
-
-    def _create_item(self, classnames, properties = None):
-        i = self._get_next_id()
-        item = Item(self.model, i, classnames, properties)
-        item.validate()
-        return item
 
     def _wanted(self, classname, properties, item):
         class_ok = classname in item.classnames or any(cd.isa(classname) for cd in item.classes)
