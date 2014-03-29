@@ -22,7 +22,7 @@ organism = document.add('Organism', taxonId = 7227)
 with closing(open(gene_file)) as genes, io.XMLWriter() as w:
     w.write_item(organism)
     for line in genes:
-        if not line.startswith("#":)
+        if not line.startswith("#"):
             gene = document.add('Gene', symbol = line.strip())
             gene.set('organism', organism)
             w.write_item(gene)
