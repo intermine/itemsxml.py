@@ -66,8 +66,11 @@ class Item:
         >>> print item
         <Item classes=set(['Employee', 'Broke']), properties={'debt': 200, 'name': 'Brian', 'id': 1}>
         """
-        self.validate_property(name, value)
-        self.properties[name] = value
+        fd = self.validate_property(name, value)
+        if fd.fieldtype == 'collection':
+            self.properties[name] = set(value)
+        else:
+            self.properties[name] = value
 
     def get(self, name):
         """Get a datum from this item.
@@ -175,6 +178,32 @@ class Item:
         for name, value in self.properties.items():
             self.validate_property(name, value)
 
+    def add_to(self, collection, *members):
+        """Add one or more members to a collection.
+
+        If the collection is not a property of this item,
+        or the members are of the wrong type, an error
+        will be raised, prior to modification of the item
+        itself.
+
+        >>> schema = get_model()
+        >>> dep = Item(schema, 1, ['Department'], {'name': 'Sales'})
+        >>> boss = Item(schema, 3, ['Manager'], {'name': 'boss'})
+        >>> worker_1 = Item(schema, 2, ['Employee'], {'name': 'worker_1'})
+        >>> worker_2 = Item(schema, 2, ['Employee'], {'name': 'worker_2'})
+        >>> dep.add_to('employees', boss)
+        >>> dep.add_to('employees', worker_1, worker_2)
+        >>> print len(dep.get('employees'))
+        3
+        >>> print boss in dep.get('employees')
+        True
+        """
+        self.validate_property(collection, members)
+        if not self.get(collection):
+            self.set(collection, members)
+        else:
+            self.get(collection).update(members)
+
     def validate_property(self, name, value):
         fd = self.get_field_descriptor(name)
         if fd.type_class is not None:
@@ -191,6 +220,7 @@ class Item:
             raise ItemPropertyError(value, fd)
         else: ## Don't try to check attribute properties - it's not worth it.
             pass
+        return fd
 
     def is_assignable_to(self, field):
         if field.type_class is None:
