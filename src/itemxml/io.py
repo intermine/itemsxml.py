@@ -69,7 +69,7 @@ class XMLWriter(object):
         self.writer.tag("reference", attrs)
 
     def end(self):
-        self.writer.endTag()
+        self.writer.endTags()
         self.writer.close()
 
     def __enter__(self):
