@@ -54,8 +54,8 @@ class Factory:
             yield item
 
     def __iter__(self):
-        for idx in xrange(self.id_counter):
-            yield self.items[idx]
+        for item in self.items.itervalues():
+            yield item
 
     # Private API
 
