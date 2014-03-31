@@ -91,8 +91,12 @@ class Item:
         ...
         ItemTypeError: Could not find field perversity...
         """
-        self.get_field_descriptor(name) # Check it can exist.
-        return self.properties.get(name)
+        fd = self.get_field_descriptor(name) # Check it can exist.
+        val = self.properties.get(name)
+        if not val and fd.fieldtype == 'collection':
+            return set()
+        else:
+            return val
 
     def __str__(self):
         return "<Item classes=%r, properties=%r>" % (self.classnames, self.properties)
