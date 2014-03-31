@@ -1,5 +1,6 @@
 import loxun
 import sys
+from contextlib import closing
 
 class EmptyValueError(Exception):
 
@@ -92,6 +93,6 @@ def write_itemsxml(items, filename = None):
     if filename is None:
         writeitems(sys.stdout)
     else:
-        with open(filename) as f:
+        with closing(open(filename, 'w')) as f:
             writeitems(f)
 
